@@ -3,6 +3,7 @@ package lumen
 import (
 	"database/sql"
 	//"github.com/derekparker/delve/pkg/config"
+	"github.com/jmoiron/sqlx/types"
 	"github.com/stellar/go/services/bifrost/config"
 	"github.com/stellar/go/support/log"
 )
@@ -55,11 +56,12 @@ type Storage interface {
 type TransactionHandler func(transaction Transaction) error
 
 type Transaction struct {
-	ID   uint64 `db:"id" json:"id"`
-	Hash string `db:"transaction_hash" json:"transaction_hash"`
-	//TxOutIndex int //id int64 ??? ddd
-	//TxEnvelope string
-	// TxResult   string ???
-	Details string         `db:"details" json:"details"`
-	Memo    sql.NullString `db:"memo" json:"memo"`
+	ID   	uint64 			`db:"id" json:"id"`
+	Hash 	string 		   	`db:"transaction_hash" json:"transaction_hash"`
+	Details types.JSONText  `db:"details" json:"details"`
+	Memo    sql.NullString 	`db:"memo" json:"memo"`
+}
+
+type AddressGenerator struct {
+
 }

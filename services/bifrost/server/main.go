@@ -27,16 +27,19 @@ type Server struct {
 	EthereumListener           *ethereum.Listener           `inject:""`
 	EthereumAddressGenerator   *ethereum.AddressGenerator   `inject:""`
 	LumenListener              *lumen.Listener              `inject:""`
+	LumenAddressGenerator      *lumen.AddressGenerator  	`inject:""`
 	StellarAccountConfigurator *stellar.AccountConfigurator `inject:""`
 	TransactionsQueue          queue.Queue                  `inject:""`
 	SSEServer                  sse.ServerInterface          `inject:""`
 
 	MinimumValueBtc string
 	MinimumValueEth string
+	MinimumValueXlm string
 	SignerPublicKey string
 
 	minimumValueSat int64
 	minimumValueWei *big.Int
+	minimumValueXlmStroops int64
 	httpServer      *http.Server
 	log             *log.Entry
 }

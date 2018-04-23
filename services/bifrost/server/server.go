@@ -12,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"time"
+	"strconv"
 
 	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/services/bifrost/bitcoin"
@@ -32,6 +33,7 @@ func (s *Server) Start() error {
 	// Register callbacks
 	s.BitcoinListener.TransactionHandler = s.onNewBitcoinTransaction
 	s.EthereumListener.TransactionHandler = s.onNewEthereumTransaction
+	s.LumenListener.TransactionHandler = s.onNewLumenTransaction
 	s.StellarAccountConfigurator.OnAccountCreated = s.onStellarAccountCreated
 	s.StellarAccountConfigurator.OnExchanged = s.onExchanged
 	s.StellarAccountConfigurator.OnExchangedTimelocked = s.OnExchangedTimelocked
@@ -80,14 +82,16 @@ func (s *Server) Start() error {
 
 	if s.LumenListener.Enabled {
 		var err error
-		// s.minimumValueWei, err = ethereum.EthToWei(s.MinimumValueEth)
-		// if err != nil {
-		// 	return errors.Wrap(err, "Invalid minimum accepted Ethereum transaction value")
-		// }
 
-		// if s.minimumValueWei.Cmp(new(big.Int)) == 0 {
-		// 	return errors.New("Minimum accepted Ethereum transaction value must be larger than 0")
-		// }
+		minimumValueXlmFloat, err := strconv.ParseFloat(s.MinimumValueXlm, 64) 
+		s.minimumValueXlmStroops = int64(minimumValueXlmFloat * 10000000)
+		if err != nil {
+			return errors.Wrap(err, "Invalid minimum accepted Lumen transaction value: "+s.MinimumValueXlm)
+		}
+
+		if s.minimumValueXlmStroops == 0 {
+			return errors.New("Minimum accepted Lumen transaction value must be larger than 0")
+		}
 
 		err = s.LumenListener.Start()
 		if err != nil {
@@ -138,6 +142,7 @@ func (s *Server) startHTTPServer() {
 	mux.Get("/events", s.HandlerEvents)
 	mux.Post("/generate-bitcoin-address", s.HandlerGenerateBitcoinAddress)
 	mux.Post("/generate-ethereum-address", s.HandlerGenerateEthereumAddress)
+	mux.Post("/generate-lumen-address", s.HandlerGenerateLumenAddress)
 	mux.Post("/recovery-transaction", s.HandlerRecoveryTransaction)
 
 	addr := fmt.Sprintf("0.0.0.0:%d", s.Config.Port)
@@ -194,6 +199,10 @@ func (s *Server) HandlerGenerateEthereumAddress(w stdhttp.ResponseWriter, r *std
 	s.handlerGenerateAddress(w, r, database.ChainEthereum)
 }
 
+func (s *Server) HandlerGenerateLumenAddress(w stdhttp.ResponseWriter, r *stdhttp.Request) {
+	s.handlerGenerateAddress(w, r, database.ChainLumen)
+}
+
 func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Request, chain database.Chain) {
 	w.Header().Set("Access-Control-Allow-Origin", s.Config.AccessControlAllowOriginHeader)
 
@@ -219,6 +228,9 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		address, err = s.BitcoinAddressGenerator.Generate(index)
 	case database.ChainEthereum:
 		address, err = s.EthereumAddressGenerator.Generate(index)
+	case database.ChainLumen:
+		address, err = s.LumenAddressGenerator.Generate(index)
+		address = s.Config.Lumen.AccountPublicKey + ";" + address
 	default:
 		log.WithField("chain", chain).Error("Invalid chain")
 		w.WriteHeader(stdhttp.StatusInternalServerError)

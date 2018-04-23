@@ -346,7 +346,20 @@ func (d *PostgresDatabase) saveLastProcessedBlock(key string, block uint64) erro
 }
 
 func (d *PostgresDatabase) GetLastProcessedStellarTransaction() (uint64, error) {
-	return d.getBlockToProcess(stellarLastTransactionIdKey)
+	keyValueStore := d.getTable(keyValueStoreTableName, nil)
+	row := keyValueStoreRow{}
+
+	err := keyValueStore.Get(&row, map[string]interface{}{"key": stellarLastTransactionIdKey}).Exec()
+	if err != nil {
+		return 0, errors.Wrap(err, "Error getting `"+stellarLastTransactionIdKey+"` from DB")
+	}
+
+	id, err := strconv.ParseUint(row.Value, 10, 64)
+	if err != nil {
+		return 0, errors.Wrap(err, "Error converting `"+stellarLastTransactionIdKey+"` value to uint64")
+	}
+
+	return id, nil
 }
 
 func (d *PostgresDatabase) SaveLastProcessedStellarTransaction(id uint64) error {

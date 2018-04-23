@@ -4,7 +4,7 @@ import (
 	"fmt"
 )
 
-var schema = fmt.Sprintf(`CREATE TYPE chain AS ENUM ('bitcoin', 'ethereum');
+var schema = fmt.Sprintf(`CREATE TYPE chain AS ENUM ('bitcoin', 'ethereum', 'lumen');
 
 CREATE TABLE address_association (
   chain chain NOT NULL,

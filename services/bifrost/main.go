@@ -308,6 +308,7 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 	ethereumAddressGenerator := &ethereum.AddressGenerator{}
 
 	lumenListener := &lumen.Listener{}
+	lumenAddressGenerator := &lumen.AddressGenerator{}
 
 	if !stressTest {
 		// Configure real clients
@@ -360,35 +361,9 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 			}
 		}
 
-		if cfg.Lumen != nil && cfg.Lumen.HorizonDatabaseDsn != "" {
-			// connConfig := &rpcclient.ConnConfig{
-			// 	Host:         cfg.Bitcoin.RpcServer,
-			// 	User:         cfg.Bitcoin.RpcUser,
-			// 	Pass:         cfg.Bitcoin.RpcPass,
-			// 	HTTPPostMode: true,
-			// 	DisableTLS:   true,
-			// }
-			// bitcoinClient, err = rpcclient.New(connConfig, nil)
-			// if err != nil {
-			// 	log.WithField("err", err).Error("Error connecting to bitcoin-core")
-			// 	os.Exit(-1)
-			// }
-
+		if cfg.Lumen != nil {
 			lumenListener.Enabled = true
-			// bitcoinListener.Testnet = cfg.Bitcoin.Testnet
-			// server.MinimumValueBtc = cfg.Bitcoin.MinimumValueBtc
-
-			// var chainParams *chaincfg.Params
-			// if cfg.Bitcoin.Testnet {
-			// 	chainParams = &chaincfg.TestNet3Params
-			// } else {
-			// 	chainParams = &chaincfg.MainNetParams
-			// }
-			// bitcoinAddressGenerator, err = bitcoin.NewAddressGenerator(cfg.Bitcoin.MasterPublicKey, chainParams)
-			// if err != nil {
-			// 	log.Error(err)
-			// 	os.Exit(-1)
-			// }
+			server.MinimumValueXlm = cfg.Lumen.MinimumValueXlm
 		}
 	} else {
 		bitcoinListener.Enabled = true
@@ -450,6 +425,7 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 		&inject.Object{Value: ethereumClient},
 		&inject.Object{Value: ethereumListener},
 		&inject.Object{Value: lumenListener},
+		&inject.Object{Value: lumenAddressGenerator},
 		&inject.Object{Value: horizonClient},
 		&inject.Object{Value: server},
 		&inject.Object{Value: sseServer},

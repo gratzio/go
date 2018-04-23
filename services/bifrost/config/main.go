@@ -72,7 +72,11 @@ type ethereumConfig struct {
 
 type lumenConfig struct {
 	// DSN to Horizon database. Using to fetch transaction history to track payments in XLM
-	HorizonDatabaseDsn string `valid:"optional" toml:"horizon_database_dsn"`
+	HorizonDatabaseDsn string `valid:"required" toml:"horizon_database_dsn"`
+	// Account which receive XLM
+	AccountPublicKey   string `valid:"required,stellar_accountid" toml:"account_public_key"`
+	MinimumValueXlm    string `valid:"required" toml:"minimum_value_xlm"`
+	MemoPrefix         string `valid:"optional" toml:"memo_prefix"`
 }
 
 func (c Config) SignerPublicKey() string {
