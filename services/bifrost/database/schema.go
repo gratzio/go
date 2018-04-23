@@ -32,6 +32,8 @@ INSERT INTO key_value_store (key, value) VALUES ('ethereum_last_block', '0');
 INSERT INTO key_value_store (key, value) VALUES ('bitcoin_address_index', '0');
 INSERT INTO key_value_store (key, value) VALUES ('bitcoin_last_block', '0');
 
+INSERT INTO key_value_store (key, value) VALUES ('stellar_last_tran_id', '0');
+
 CREATE TABLE processed_transaction (
   chain chain NOT NULL,
   /* Ethereum: "0x"+hash (so 64+2) */

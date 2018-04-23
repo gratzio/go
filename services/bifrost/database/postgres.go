@@ -19,8 +19,9 @@ const (
 	ethereumAddressIndexKey = "ethereum_address_index"
 	ethereumLastBlockKey    = "ethereum_last_block"
 
-	bitcoinAddressIndexKey = "bitcoin_address_index"
-	bitcoinLastBlockKey    = "bitcoin_last_block"
+	bitcoinAddressIndexKey      = "bitcoin_address_index"
+	bitcoinLastBlockKey         = "bitcoin_last_block"
+	stellarLastTransactionIdKey = "stellar_last_tran_id"
 
 	addressAssociationTableName   = "address_association"
 	broadcastedEventTableName     = "broadcasted_event"
@@ -342,6 +343,14 @@ func (d *PostgresDatabase) saveLastProcessedBlock(key string, block uint64) erro
 	}
 
 	return nil
+}
+
+func (d *PostgresDatabase) GetLastProcessedStellarTransaction() (uint64, error) {
+	return d.getBlockToProcess(stellarLastTransactionIdKey)
+}
+
+func (d *PostgresDatabase) SaveLastProcessedStellarTransaction(id uint64) error {
+	return d.saveLastProcessedBlock(stellarLastTransactionIdKey, id)
 }
 
 // QueueAdd implements queue.Queue interface. If element already exists in a queue, it should

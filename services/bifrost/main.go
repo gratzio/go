@@ -20,6 +20,7 @@ import (
 	"github.com/stellar/go/services/bifrost/config"
 	"github.com/stellar/go/services/bifrost/database"
 	"github.com/stellar/go/services/bifrost/ethereum"
+	"github.com/stellar/go/services/bifrost/lumen"
 	"github.com/stellar/go/services/bifrost/server"
 	"github.com/stellar/go/services/bifrost/sse"
 	"github.com/stellar/go/services/bifrost/stellar"
@@ -306,6 +307,8 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 	ethereumListener := &ethereum.Listener{}
 	ethereumAddressGenerator := &ethereum.AddressGenerator{}
 
+	lumenListener := &lumen.Listener{}
+
 	if !stressTest {
 		// Configure real clients
 		if cfg.Bitcoin != nil {
@@ -355,6 +358,37 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 				log.Error(err)
 				os.Exit(-1)
 			}
+		}
+
+		if cfg.Lumen != nil && cfg.Lumen.HorizonDatabaseDsn != "" {
+			// connConfig := &rpcclient.ConnConfig{
+			// 	Host:         cfg.Bitcoin.RpcServer,
+			// 	User:         cfg.Bitcoin.RpcUser,
+			// 	Pass:         cfg.Bitcoin.RpcPass,
+			// 	HTTPPostMode: true,
+			// 	DisableTLS:   true,
+			// }
+			// bitcoinClient, err = rpcclient.New(connConfig, nil)
+			// if err != nil {
+			// 	log.WithField("err", err).Error("Error connecting to bitcoin-core")
+			// 	os.Exit(-1)
+			// }
+
+			lumenListener.Enabled = true
+			// bitcoinListener.Testnet = cfg.Bitcoin.Testnet
+			// server.MinimumValueBtc = cfg.Bitcoin.MinimumValueBtc
+
+			// var chainParams *chaincfg.Params
+			// if cfg.Bitcoin.Testnet {
+			// 	chainParams = &chaincfg.TestNet3Params
+			// } else {
+			// 	chainParams = &chaincfg.MainNetParams
+			// }
+			// bitcoinAddressGenerator, err = bitcoin.NewAddressGenerator(cfg.Bitcoin.MasterPublicKey, chainParams)
+			// if err != nil {
+			// 	log.Error(err)
+			// 	os.Exit(-1)
+			// }
 		}
 	} else {
 		bitcoinListener.Enabled = true
@@ -415,6 +449,7 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 		&inject.Object{Value: ethereumAddressGenerator},
 		&inject.Object{Value: ethereumClient},
 		&inject.Object{Value: ethereumListener},
+		&inject.Object{Value: lumenListener},
 		&inject.Object{Value: horizonClient},
 		&inject.Object{Value: server},
 		&inject.Object{Value: sseServer},

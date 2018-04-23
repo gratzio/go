@@ -36,8 +36,8 @@ func (s *Server) Start() error {
 	s.StellarAccountConfigurator.OnExchanged = s.onExchanged
 	s.StellarAccountConfigurator.OnExchangedTimelocked = s.OnExchangedTimelocked
 
-	if !s.BitcoinListener.Enabled && !s.EthereumListener.Enabled {
-		return errors.New("At least one listener (BitcoinListener or EthereumListener) must be enabled")
+	if !s.BitcoinListener.Enabled && !s.EthereumListener.Enabled && !s.LumenListener.Enabled {
+		return errors.New("At least one listener (BitcoinListener, EthereumListener or LumenListener) must be enabled")
 	}
 
 	if s.BitcoinListener.Enabled {
@@ -76,6 +76,25 @@ func (s *Server) Start() error {
 		}
 	} else {
 		s.log.Warn("EthereumListener disabled")
+	}
+
+	if s.LumenListener.Enabled {
+		var err error
+		// s.minimumValueWei, err = ethereum.EthToWei(s.MinimumValueEth)
+		// if err != nil {
+		// 	return errors.Wrap(err, "Invalid minimum accepted Ethereum transaction value")
+		// }
+
+		// if s.minimumValueWei.Cmp(new(big.Int)) == 0 {
+		// 	return errors.New("Minimum accepted Ethereum transaction value must be larger than 0")
+		// }
+
+		err = s.LumenListener.Start()
+		if err != nil {
+			return errors.Wrap(err, "Error starting LumenListener")
+		}
+	} else {
+		s.log.Warn("LumenListener disabled")
 	}
 
 	err := s.StellarAccountConfigurator.Start()

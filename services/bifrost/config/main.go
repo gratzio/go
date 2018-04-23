@@ -9,6 +9,7 @@ type Config struct {
 	UsingProxy                     bool            `valid:"optional" toml:"using_proxy"`
 	Bitcoin                        *bitcoinConfig  `valid:"optional" toml:"bitcoin"`
 	Ethereum                       *ethereumConfig `valid:"optional" toml:"ethereum"`
+	Lumen                          *lumenConfig    `valid:"optional" toml:"lumen"`
 	AccessControlAllowOriginHeader string          `valid:"optional" toml:"access_control_allow_origin_header"`
 
 	Stellar struct {
@@ -67,6 +68,11 @@ type ethereumConfig struct {
 	TokenPrice string `valid:"required" toml:"token_price"`
 	// Host only
 	RpcServer string `valid:"required" toml:"rpc_server"`
+}
+
+type lumenConfig struct {
+	// DSN to Horizon database. Using to fetch transaction history to track payments in XLM
+	HorizonDatabaseDsn string `valid:"optional" toml:"horizon_database_dsn"`
 }
 
 func (c Config) SignerPublicKey() string {

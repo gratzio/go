@@ -24,6 +24,7 @@ const (
 
 	ChainBitcoin  Chain = "bitcoin"
 	ChainEthereum Chain = "ethereum"
+	ChainLumen    Chain = "lumen"
 )
 
 type Database interface {
