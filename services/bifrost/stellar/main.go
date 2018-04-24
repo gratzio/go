@@ -30,6 +30,7 @@ type AccountConfigurator struct {
 	TokenAssetCode        string
 	TokenPriceBTC         string
 	TokenPriceETH         string
+	TokenPriceXLM         string
 	StartingBalance       string
 	OnAccountCreated      func(destination string)
 	OnExchanged           func(destination string)

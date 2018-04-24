@@ -23,6 +23,8 @@ const (
 	bitcoinLastBlockKey         = "bitcoin_last_block"
 	stellarLastTransactionIdKey = "stellar_last_tran_id"
 
+	lumenAddressIndexKey = "lumen_address_index"
+
 	addressAssociationTableName   = "address_association"
 	broadcastedEventTableName     = "broadcasted_event"
 	keyValueStoreTableName        = "key_value_store"
@@ -212,6 +214,8 @@ func (d *PostgresDatabase) IncrementAddressIndex(chain Chain) (uint32, error) {
 		key = bitcoinAddressIndexKey
 	case ChainEthereum:
 		key = ethereumAddressIndexKey
+	case ChainLumen:
+		key = lumenAddressIndexKey
 	default:
 		return 0, errors.New("Invalid chain")
 	}

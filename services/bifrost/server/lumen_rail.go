@@ -32,12 +32,23 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 	_ = json.Unmarshal(transaction.Details, &details)
 
 	// Let's check if tx is valid first.
-	if details["asset_type"] != "native" /*|| !tran.Memo.Valid !!!!!*/ {
+
+	if details["asset_type"] != "native" {
 		return nil
 	}
 
 	amount := details["amount"].(string)
-	MemoValue := transaction.Memo.String
+	MemoValue := strings.TrimSpace(transaction.Memo.String)
+
+	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(MemoValue, s.Config.Lumen.MemoPrefix) {
+		return nil
+	}
+	
+	MemoKey := strings.TrimSpace(MemoValue[len(s.Config.Lumen.MemoPrefix):])
+
+	if MemoKey == "" {
+		return nil
+	}
 
 	ValueFloat, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
@@ -45,22 +56,12 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 	}
 	Value := int64(ValueFloat  * 10000000)
 		
-	localLog.Infof("!!!! processing transaction id=%s, hash=%s, amount=%s, stroops=%s, minimumValueXlmStroops=%s", transaction.ID, transaction.Hash, amount, Value, s.minimumValueXlmStroops)
-	
 	// Check if value is above minimum required
 	if Value < s.minimumValueXlmStroops {
 		localLog.Debug("Value is below minimum required amount, skipping")
 		return nil
 	}
-
-	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(MemoValue, s.Config.Lumen.MemoPrefix) {
-		return nil
-	}
-
-	MemoKey := MemoValue[len(s.Config.Lumen.MemoPrefix):]
-
-	localLog.Infof("!!!! processing transaction MemoKey=%s", MemoKey)
-
+	
 	addressAssociation, err := s.Database.GetAssociationByChainAddress(database.ChainLumen, MemoKey)
 	if err != nil {
 		return errors.Wrap(err, "Error getting association for " + MemoKey)

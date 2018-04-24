@@ -34,20 +34,19 @@ func (ac *AccountConfigurator) createAccountTransaction(destination string) erro
 // configureAccountTransaction is using a signer on an user accounts to configure the account.
 func (ac *AccountConfigurator) configureAccountTransaction(destination, intermediateAssetCode, amount string, needsAuthorize bool) error {
 	mutators := []build.TransactionMutator{
-		build.Trust(intermediateAssetCode, ac.IssuerPublicKey),
 		build.Trust(ac.TokenAssetCode, ac.IssuerPublicKey),
+	}
+
+	if intermediateAssetCode != "XLM" {
+		mutators = append(
+			mutators,
+			build.Trust(intermediateAssetCode, ac.IssuerPublicKey),
+		)
 	}
 
 	if needsAuthorize {
 		mutators = append(
 			mutators,
-			// Chain token received (BTC/ETH)
-			build.AllowTrust(
-				build.SourceAccount{ac.IssuerPublicKey},
-				build.Trustor{destination},
-				build.AllowTrustAsset{intermediateAssetCode},
-				build.Authorize{true},
-			),
 			// Destination token
 			build.AllowTrust(
 				build.SourceAccount{ac.IssuerPublicKey},
@@ -56,6 +55,19 @@ func (ac *AccountConfigurator) configureAccountTransaction(destination, intermed
 				build.Authorize{true},
 			),
 		)
+
+		if intermediateAssetCode != "XLM" {
+			mutators = append(
+				mutators,
+				// Chain token received (BTC/ETH)
+				build.AllowTrust(
+					build.SourceAccount{ac.IssuerPublicKey},
+					build.Trustor{destination},
+					build.AllowTrustAsset{intermediateAssetCode},
+					build.Authorize{true},
+				),
+			)
+		}
 	}
 
 	var tokenPrice string
@@ -64,32 +76,69 @@ func (ac *AccountConfigurator) configureAccountTransaction(destination, intermed
 		tokenPrice = ac.TokenPriceBTC
 	case "ETH":
 		tokenPrice = ac.TokenPriceETH
+	case "XLM":
+		tokenPrice = ac.TokenPriceXLM
+		
+		// calculate amount to be transferred as [transaction amount] - [starting balance]
+		// as [starting balance] already sent when create account
+		AmountFloat, err := strconv.ParseFloat(amount, 64)
+		if err != nil {
+			return errors.Wrap(err, "Stellar: Invalid amount: "+amount)
+		}
+		StartingBalanceFloat, err := strconv.ParseFloat(ac.StartingBalance, 64)
+		if err != nil {
+			return errors.Wrap(err, "Stellar: Invalid starting balance: "+ac.StartingBalance)
+		}
+		transferAmountFloat := AmountFloat - StartingBalanceFloat
+		if transferAmountFloat <= 0 {
+			return errors.Errorf("Stellar: Transfer amount is less or equal 0 (= [transaction amount] - [starting balance]) %s", transferAmountFloat)
+		}
+		transferAmount := strconv.FormatFloat(transferAmountFloat, 'f', -1, 64)
+		mutators = append(
+			mutators,
+			build.Payment(
+				build.SourceAccount{ac.DistributionPublicKey},
+				build.Destination{destination},
+				build.NativeAmount{Amount: transferAmount},
+			),
+			// Exchange XLM => token
+			build.CreateOffer(
+				build.Rate{
+					Selling: build.NativeAsset(),
+					Buying:  build.CreditAsset(ac.TokenAssetCode, ac.IssuerPublicKey),
+					Price:   build.Price(tokenPrice),
+				},
+				build.Amount(transferAmount),
+			),
+		)
+		
 	default:
 		return errors.Errorf("Invalid intermediateAssetCode: $%s", intermediateAssetCode)
 	}
-
-	mutators = append(
-		mutators,
-		// Send BTC/ETH
-		build.Payment(
-			build.SourceAccount{ac.DistributionPublicKey},
-			build.Destination{destination},
-			build.CreditAmount{
-				Code:   intermediateAssetCode,
-				Issuer: ac.IssuerPublicKey,
-				Amount: amount,
-			},
-		),
-		// Exchange BTC/ETH => token
-		build.CreateOffer(
-			build.Rate{
-				Selling: build.CreditAsset(intermediateAssetCode, ac.IssuerPublicKey),
-				Buying:  build.CreditAsset(ac.TokenAssetCode, ac.IssuerPublicKey),
-				Price:   build.Price(tokenPrice),
-			},
-			build.Amount(amount),
-		),
-	)
+	
+	if intermediateAssetCode == "BTC" || intermediateAssetCode == "ETH" {
+		mutators = append(
+			mutators,
+			build.Payment(
+				build.SourceAccount{ac.DistributionPublicKey},
+				build.Destination{destination},
+				build.CreditAmount{
+					Code:   intermediateAssetCode,
+					Issuer: ac.IssuerPublicKey,
+					Amount: amount,
+				},
+			),
+			// Exchange BTC/ETH => token
+			build.CreateOffer(
+				build.Rate{
+					Selling: build.CreditAsset(intermediateAssetCode, ac.IssuerPublicKey),
+					Buying:  build.CreditAsset(ac.TokenAssetCode, ac.IssuerPublicKey),
+					Price:   build.Price(tokenPrice),
+				},
+				build.Amount(amount),
+			),
+		)
+	}
 
 	transaction, err := ac.buildTransaction(destination, ac.SignerSecretKey, mutators...)
 	if err != nil {

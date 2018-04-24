@@ -75,8 +75,13 @@ type lumenConfig struct {
 	HorizonDatabaseDsn string `valid:"required" toml:"horizon_database_dsn"`
 	// Account which receive XLM
 	AccountPublicKey   string `valid:"required,stellar_accountid" toml:"account_public_key"`
+	// Minimum value of transaction accepted by Bifrost in XLM.
+	// Everything below will be ignored.
 	MinimumValueXlm    string `valid:"required" toml:"minimum_value_xlm"`
+	// Prefix which will be used to determine transaction will be processed by bifrost
 	MemoPrefix         string `valid:"optional" toml:"memo_prefix"`
+	// TokenPrice is a price of one token in XLM
+	TokenPrice string `valid:"required" toml:"token_price"`
 }
 
 func (c Config) SignerPublicKey() string {

@@ -406,6 +406,10 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 		stellarAccountConfigurator.TokenPriceETH = cfg.Ethereum.TokenPrice
 	}
 
+	if cfg.Lumen != nil {
+		stellarAccountConfigurator.TokenPriceXLM = cfg.Lumen.TokenPrice
+	}
+
 	horizonClient := &horizon.Client{
 		URL: cfg.Stellar.Horizon,
 		HTTP: &http.Client{

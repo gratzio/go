@@ -214,6 +214,15 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		return
 	}
 
+	// addressAssociation, err := s.Database.GetAssociationByStellarPublicKey(stellarPublicKey)
+	// if err != nil {
+	// 	return errors.Wrap(err, "Error getting association")
+	// }
+
+	// if addressAssociation == nil {
+		
+	// }
+
 	index, err := s.Database.IncrementAddressIndex(chain)
 	if err != nil {
 		log.WithField("err", err).Error("Error incrementing address index")
@@ -230,7 +239,6 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		address, err = s.EthereumAddressGenerator.Generate(index)
 	case database.ChainLumen:
 		address, err = s.LumenAddressGenerator.Generate(index)
-		address = s.Config.Lumen.AccountPublicKey + ";" + address
 	default:
 		log.WithField("chain", chain).Error("Invalid chain")
 		w.WriteHeader(stdhttp.StatusInternalServerError)
@@ -259,10 +267,15 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 	// Create SSE stream
 	s.SSEServer.CreateStream(address)
 
+	addressResponse :=  address
+	if chain == database.ChainLumen {
+		addressResponse = s.Config.Lumen.AccountPublicKey + ";" + address
+	}
+	
 	response := GenerateAddressResponse{
 		ProtocolVersion: ProtocolVersion,
 		Chain:           string(chain),
-		Address:         address,
+		Address:         addressResponse,
 		Signer:          s.SignerPublicKey,
 	}
 
