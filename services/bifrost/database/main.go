@@ -36,7 +36,8 @@ type Database interface {
 	GetAssociationByChainAddress(chain Chain, address string) (*AddressAssociation, error)
 	// GetAssociationByStellarPublicKey searches for previously saved Bitcoin/Ethereum-Stellar association.
 	// Should return nil if not found.
-	GetAssociationByStellarPublicKey(stellarPublicKey string) (*AddressAssociation, error)
+	GetAssociationByStellarPublicKey(chain Chain, stellarPublicKey string) (*AddressAssociation, error)
+	GetAssociationByStellarPublicKeyAndAssetCode(assetCode string, stellarPublicKey string) (*AddressAssociation, error)
 	// AddProcessedTransaction adds a transaction to database as processed. This
 	// should return `true` and no error if transaction processing has already started/finished.
 	AddProcessedTransaction(chain Chain, transactionID, receivingAddress string) (alreadyProcessing bool, err error)

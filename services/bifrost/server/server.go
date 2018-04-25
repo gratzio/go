@@ -239,48 +239,59 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		return
 	}
 
-	index, err := s.Database.IncrementAddressIndex(chain)
-	if err != nil {
-		log.WithField("err", err).Error("Error incrementing address index")
-		w.WriteHeader(stdhttp.StatusInternalServerError)
-		return
-	}
-
 	var address string
-
-	switch chain {
-	case database.ChainBitcoin:
-		address, err = s.BitcoinAddressGenerator.Generate(index)
-	case database.ChainEthereum:
-		address, err = s.EthereumAddressGenerator.Generate(index)
-	case database.ChainLumen:
-		address, err = s.LumenAddressGenerator.Generate(index)
-		address = s.Config.Lumen.MemoPrefix + address
-	default:
-		log.WithField("chain", chain).Error("Invalid chain")
-		w.WriteHeader(stdhttp.StatusInternalServerError)
-		return
-	}
-
+	
+	association, err := s.Database.GetAssociationByStellarPublicKey(chain, stellarPublicKey)
 	if err != nil {
-		log.WithFields(log.F{"err": err, "index": index}).Error("Error generating address")
+		log.WithField("err", err).Error("Error getting association")
 		w.WriteHeader(stdhttp.StatusInternalServerError)
 		return
 	}
 
-	err = s.Database.CreateAddressAssociation(chain, stellarPublicKey, address, index)
-	if err != nil {
-		log.WithFields(log.F{
-			"err":              err,
-			"chain":            chain,
-			"index":            index,
-			"stellarPublicKey": stellarPublicKey,
-			"address":          address,
-		}).Error("Error creating address association")
-		w.WriteHeader(stdhttp.StatusInternalServerError)
-		return
-	}
+	if association == nil {
+		index, err := s.Database.IncrementAddressIndex(chain)
+		if err != nil {
+			log.WithField("err", err).Error("Error incrementing address index")
+			w.WriteHeader(stdhttp.StatusInternalServerError)
+			return
+		}
 
+		switch chain {
+		case database.ChainBitcoin:
+			address, err = s.BitcoinAddressGenerator.Generate(index)
+		case database.ChainEthereum:
+			address, err = s.EthereumAddressGenerator.Generate(index)
+		case database.ChainLumen:
+			address, err = s.LumenAddressGenerator.Generate(index)
+			address = s.Config.Lumen.MemoPrefix + address
+		default:
+			log.WithField("chain", chain).Error("Invalid chain")
+			w.WriteHeader(stdhttp.StatusInternalServerError)
+			return
+		}
+
+		if err != nil {
+			log.WithFields(log.F{"err": err, "index": index}).Error("Error generating address")
+			w.WriteHeader(stdhttp.StatusInternalServerError)
+			return
+		}
+
+		err = s.Database.CreateAddressAssociation(chain, stellarPublicKey, address, index)
+		if err != nil {
+			log.WithFields(log.F{
+				"err":              err,
+				"chain":            chain,
+				"index":            index,
+				"stellarPublicKey": stellarPublicKey,
+				"address":          address,
+			}).Error("Error creating address association")
+			w.WriteHeader(stdhttp.StatusInternalServerError)
+			return
+		}		
+	} else {
+		address = association.Address
+	}
+	
 	// Create SSE stream
 	s.SSEServer.CreateStream(address)
 

@@ -11,10 +11,12 @@ CREATE TABLE address_association (
   address_index bigint NOT NULL,
   /* bitcoin 34 characters */
   /* ethereum 42 characters */
-  address varchar(42) NOT NULL UNIQUE,
-  stellar_public_key varchar(56) NOT NULL UNIQUE,
+  address varchar(42) NOT NULL,
+  stellar_public_key varchar(56) NOT NULL,
   created_at timestamp NOT NULL,
   PRIMARY KEY (chain, address_index, address, stellar_public_key),
+  UNIQUE (chain, address),
+  UNIQUE (chain, stellar_public_key),
   CONSTRAINT valid_address_index CHECK (address_index >= 0)
 );
 
@@ -75,7 +77,7 @@ CREATE TABLE broadcasted_event (
   event event NOT NULL,
   data text NOT NULL,
   PRIMARY KEY (id),
-  UNIQUE (address, event)
+  /* UNIQUE (address, event) */
 );
 
 CREATE TABLE recovery_transaction (

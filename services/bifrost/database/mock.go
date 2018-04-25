@@ -22,8 +22,13 @@ func (m *MockDatabase) GetAssociationByChainAddress(chain Chain, address string)
 	return a.Get(0).(*AddressAssociation), a.Error(1)
 }
 
-func (m *MockDatabase) GetAssociationByStellarPublicKey(stellarPublicKey string) (*AddressAssociation, error) {
-	a := m.Called(stellarPublicKey)
+func (m *MockDatabase) GetAssociationByStellarPublicKey(chain Chain, stellarPublicKey string) (*AddressAssociation, error) {
+	a := m.Called(chain, stellarPublicKey)
+	return a.Get(0).(*AddressAssociation), a.Error(1)
+}
+
+func (m *MockDatabase) GetAssociationByStellarPublicKeyAndAssetCode(assetCode string, stellarPublicKey string) (*AddressAssociation, error) {
+	a := m.Called(assetCode, stellarPublicKey)
 	return a.Get(0).(*AddressAssociation), a.Error(1)
 }
 

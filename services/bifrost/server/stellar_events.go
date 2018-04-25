@@ -6,8 +6,8 @@ import (
 	"github.com/stellar/go/services/bifrost/sse"
 )
 
-func (s *Server) onStellarAccountCreated(destination string) {
-	association, err := s.Database.GetAssociationByStellarPublicKey(destination)
+func (s *Server) onStellarAccountCreated(assetCode string, destination string) {
+	association, err := s.Database.GetAssociationByStellarPublicKeyAndAssetCode(assetCode, destination)
 	if err != nil {
 		s.log.WithField("err", err).Error("Error getting association")
 		return
@@ -21,8 +21,8 @@ func (s *Server) onStellarAccountCreated(destination string) {
 	s.SSEServer.BroadcastEvent(association.Address, sse.AccountCreatedAddressEvent, nil)
 }
 
-func (s *Server) onExchanged(destination string) {
-	association, err := s.Database.GetAssociationByStellarPublicKey(destination)
+func (s *Server) onExchanged(assetCode string, destination string) {
+	association, err := s.Database.GetAssociationByStellarPublicKeyAndAssetCode(assetCode, destination)
 	if err != nil {
 		s.log.WithField("err", err).Error("Error getting association")
 		return
@@ -36,8 +36,8 @@ func (s *Server) onExchanged(destination string) {
 	s.SSEServer.BroadcastEvent(association.Address, sse.ExchangedEvent, nil)
 }
 
-func (s *Server) OnExchangedTimelocked(destination, transaction string) {
-	association, err := s.Database.GetAssociationByStellarPublicKey(destination)
+func (s *Server) OnExchangedTimelocked(assetCode string, destination, transaction string) {
+	association, err := s.Database.GetAssociationByStellarPublicKeyAndAssetCode(assetCode, destination)
 	if err != nil {
 		s.log.WithField("err", err).Error("Error getting association")
 		return

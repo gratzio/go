@@ -180,10 +180,10 @@ func (d *PostgresDatabase) GetAssociationByChainAddress(chain Chain, address str
 	return row, nil
 }
 
-func (d *PostgresDatabase) GetAssociationByStellarPublicKey(stellarPublicKey string) (*AddressAssociation, error) {
+func (d *PostgresDatabase) GetAssociationByStellarPublicKey(chain Chain, stellarPublicKey string) (*AddressAssociation, error) {
 	addressAssociationTable := d.getTable(addressAssociationTableName, nil)
 	row := &AddressAssociation{}
-	where := map[string]interface{}{"stellar_public_key": stellarPublicKey}
+	where := map[string]interface{}{"stellar_public_key": stellarPublicKey, "chain": chain}
 	err := addressAssociationTable.Get(row, where).Exec()
 	if err != nil {
 		switch errors.Cause(err) {
@@ -195,6 +195,21 @@ func (d *PostgresDatabase) GetAssociationByStellarPublicKey(stellarPublicKey str
 	}
 
 	return row, nil
+}
+
+func (d *PostgresDatabase) GetAssociationByStellarPublicKeyAndAssetCode(assetCode string, stellarPublicKey string) (*AddressAssociation, error) {
+	var chain Chain
+	switch assetCode {
+	case "BTC":
+		chain = ChainBitcoin
+	case "ETH":
+		chain = ChainEthereum
+	case "XLM":
+		chain = ChainLumen
+	default:
+		return nil, errors.Errorf("Invalid AssetCode: $%s", assetCode)
+	}
+	return d.GetAssociationByStellarPublicKey(chain, stellarPublicKey)
 }
 
 func (d *PostgresDatabase) AddProcessedTransaction(chain Chain, transactionID, receivingAddress string) (bool, error) {

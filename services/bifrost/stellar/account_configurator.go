@@ -110,7 +110,7 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 	}
 
 	if ac.OnAccountCreated != nil {
-		ac.OnAccountCreated(destination)
+		ac.OnAccountCreated(assetCode, destination)
 	}
 
 	ac.setAccountStatus(destination, StatusWaitingForSigner)
@@ -155,7 +155,7 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 		}
 
 		if ac.OnExchanged != nil {
-			ac.OnExchanged(destination)
+			ac.OnExchanged(assetCode, destination)
 		}
 	} else {
 		localLog.Info("Creating unlock transaction to remove temporary signer")
@@ -166,7 +166,7 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 		}
 
 		if ac.OnExchangedTimelocked != nil {
-			ac.OnExchangedTimelocked(destination, transaction)
+			ac.OnExchangedTimelocked(assetCode, destination, transaction)
 		}
 	}
 

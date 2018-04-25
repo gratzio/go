@@ -32,9 +32,9 @@ type AccountConfigurator struct {
 	TokenPriceETH         string
 	TokenPriceXLM         string
 	StartingBalance       string
-	OnAccountCreated      func(destination string)
-	OnExchanged           func(destination string)
-	OnExchangedTimelocked func(destination, transaction string)
+	OnAccountCreated      func(assetCode string, destination string)
+	OnExchanged           func(assetCode string, estination string)
+	OnExchangedTimelocked func(assetCode string, destination, transaction string)
 
 	signerPublicKey     string
 	signerSequence      uint64
