@@ -13,6 +13,7 @@ import (
 	"os/signal"
 	"time"
 	"strconv"
+	"strings"
 
 	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/services/bifrost/bitcoin"
@@ -157,6 +158,28 @@ func (s *Server) startHTTPServer() {
 	})
 }
 
+func (s *Server) isLumenEventStream(address string) bool {
+	// check Lumen Memo prefix if exists
+	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(strings.ToUpper(address), strings.ToUpper(s.Config.Lumen.MemoPrefix)) {
+		return false;
+	}
+
+	if s.Config.Lumen.MemoPrefix != "" {
+		if strings.HasPrefix(strings.ToUpper(address), strings.ToUpper(s.Config.Lumen.MemoPrefix)) {
+			addressWithoutPrefix := address[len(s.Config.Lumen.MemoPrefix):]
+			// for Lumen make sure address is short as address generated for lumen is uint64 so it can't be long
+			// and additionall check it starts from '5'
+			return len(addressWithoutPrefix) < 25 && addressWithoutPrefix[0] == '5'
+		} else {
+			return false;
+		}
+	} 
+
+	// for Lumen make sure address is short as address generated for lumen is uint64 so it can't be long
+	// and additionall check it starts from '5'
+	return len(address) < 25 && address[0] == '5'
+}
+
 func (s *Server) HandlerEvents(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 	// Create SSE stream if not exists but only if address exists.
 	// This is required to restart a stream after server restart or failure.
@@ -168,8 +191,10 @@ func (s *Server) HandlerEvents(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 			w.WriteHeader(stdhttp.StatusBadRequest)
 			return
 		}
-
-		if address[0] == '0' {
+		
+		if s.isLumenEventStream(address) {
+			chain = database.ChainLumen
+		} else if address[0] == '0' {
 			chain = database.ChainEthereum
 		} else {
 			// 1 or m, n in testnet
@@ -214,15 +239,6 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		return
 	}
 
-	// addressAssociation, err := s.Database.GetAssociationByStellarPublicKey(stellarPublicKey)
-	// if err != nil {
-	// 	return errors.Wrap(err, "Error getting association")
-	// }
-
-	// if addressAssociation == nil {
-		
-	// }
-
 	index, err := s.Database.IncrementAddressIndex(chain)
 	if err != nil {
 		log.WithField("err", err).Error("Error incrementing address index")
@@ -239,6 +255,7 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 		address, err = s.EthereumAddressGenerator.Generate(index)
 	case database.ChainLumen:
 		address, err = s.LumenAddressGenerator.Generate(index)
+		address = s.Config.Lumen.MemoPrefix + address
 	default:
 		log.WithField("chain", chain).Error("Invalid chain")
 		w.WriteHeader(stdhttp.StatusInternalServerError)
@@ -271,7 +288,7 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 	if chain == database.ChainLumen {
 		addressResponse = s.Config.Lumen.AccountPublicKey + ";" + address
 	}
-	
+
 	response := GenerateAddressResponse{
 		ProtocolVersion: ProtocolVersion,
 		Chain:           string(chain),

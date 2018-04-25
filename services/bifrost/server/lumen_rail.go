@@ -38,18 +38,16 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 	}
 
 	amount := details["amount"].(string)
-	MemoValue := strings.TrimSpace(transaction.Memo.String)
+	MemoValue := strings.ToUpper(strings.TrimSpace(transaction.Memo.String))
 
-	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(MemoValue, s.Config.Lumen.MemoPrefix) {
+	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(MemoValue, strings.ToUpper(s.Config.Lumen.MemoPrefix)) {
 		return nil
 	}
 	
-	MemoKey := strings.TrimSpace(MemoValue[len(s.Config.Lumen.MemoPrefix):])
-
-	if MemoKey == "" {
+	if MemoValue == "" {
 		return nil
 	}
-
+	
 	ValueFloat, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
 		return errors.Wrap(err, "Stellar: Invalid transaction amount: "+amount)
@@ -62,9 +60,9 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 		return nil
 	}
 	
-	addressAssociation, err := s.Database.GetAssociationByChainAddress(database.ChainLumen, MemoKey)
+	addressAssociation, err := s.Database.GetAssociationByChainAddress(database.ChainLumen, MemoValue)
 	if err != nil {
-		return errors.Wrap(err, "Error getting association for " + MemoKey)
+		return errors.Wrap(err, "Error getting association for " + MemoValue)
 	}
 
 	if addressAssociation == nil {
@@ -73,7 +71,7 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 	}
 
 	// Add transaction as processing.
-	processed, err := s.Database.AddProcessedTransaction(database.ChainLumen, transaction.Hash, MemoKey)
+	processed, err := s.Database.AddProcessedTransaction(database.ChainLumen, transaction.Hash, MemoValue)
 	if err != nil {
 		return err
 	}
@@ -99,7 +97,7 @@ func (s *Server) onNewLumenTransaction(transaction lumen.Transaction) error {
 	localLog.Info("Transaction added to transaction queue")
 
 	// Broadcast event to address stream
-	s.SSEServer.BroadcastEvent(MemoKey, sse.TransactionReceivedAddressEvent, nil)
+	s.SSEServer.BroadcastEvent(MemoValue, sse.TransactionReceivedAddressEvent, nil)
 	localLog.Info("Transaction processed successfully")
 	return nil
 }

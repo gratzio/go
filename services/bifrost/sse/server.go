@@ -56,6 +56,11 @@ func (s *Server) StartPublishing() error {
 
 			for _, event := range events {
 				s.publishEvent(event.Address, event.Event, []byte(event.Data))
+				
+				if event.Event == "exchanged" || event.Event == "exchanged_timelocked" {
+					s.log.WithField("event", event.Event).Info("Close SSE streaming after last event")
+					s.eventsServer.RemoveStream(event.Address);
+				}
 			}
 
 			s.lastID = lastID
@@ -95,6 +100,11 @@ func (s *Server) CreateStream(address string) {
 func (s *Server) StreamExists(address string) bool {
 	s.initOnce.Do(s.init)
 	return s.eventsServer.StreamExists(address)
+}
+
+func (s *Server) RemoveStream(address string) {
+	s.initOnce.Do(s.init)
+	s.eventsServer.RemoveStream(address)
 }
 
 func (s *Server) HTTPHandler(w http.ResponseWriter, r *http.Request) {

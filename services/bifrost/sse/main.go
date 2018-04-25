@@ -32,6 +32,7 @@ type ServerInterface interface {
 	StartPublishing() error
 	CreateStream(address string)
 	StreamExists(address string) bool
+	RemoveStream(id string)
 	HTTPHandler(w http.ResponseWriter, r *http.Request)
 }
 
