@@ -19,18 +19,20 @@ type Config struct {
 		TokenAssetCode string `valid:"required" toml:"token_asset_code"`
 		// NeedsAuthorize should be set to true if issuers's authorization required flag is set.
 		NeedsAuthorize bool `valid:"optional" toml:"needs_authorize"`
-		// IssuerPublicKey is public key of the assets issuer.
-		IssuerPublicKey string `valid:"required,stellar_accountid" toml:"issuer_public_key"`
-		// DistributionPublicKey is public key of the distribution account.
+		// IssuerSecretKey is secret key of the assets issuer.
+		IssuerSecretKey string `valid:"required,stellar_seed" toml:"issuer_secret_key"`
+		// DistributionSecretKey is secret key of the distribution account.
 		// Distribution account can be the same account as issuer account however it's recommended
 		// to use a separate account.
 		// Distribution account is also used to fund new accounts.
-		DistributionPublicKey string `valid:"required,stellar_accountid" toml:"distribution_public_key"`
-		// SignerSecretKey is:
+		DistributionSecretKey string `valid:"required,stellar_seed" toml:"distribution_secret_key"`
+		// ChannelSecretKey is:
 		// * Distribution's secret key if only one instance of Bifrost is deployed.
 		// * Channel's secret key of Distribution account if more than one instance of Bifrost is deployed.
 		// https://www.stellar.org/developers/guides/channels.html
-		// Signer's sequence number will be consumed in transaction's sequence number.
+		// Channel's sequence number will be consumed in transaction's sequence number.
+		ChannelSecretKey string `valid:"required,stellar_seed" toml:"channel_secret_key"`
+		// SignerSecretKey is a key used as temoporary signer and for time locked accounts
 		SignerSecretKey string `valid:"required,stellar_seed" toml:"signer_secret_key"`
 		// StartingBalance is the starting amount of XLM for newly created accounts.
 		// Default value is 41. Increase it if you need Data records / other custom entities on new account.
@@ -74,12 +76,12 @@ type lumenConfig struct {
 	// DSN to Horizon database. Using to fetch transaction history to track payments in XLM
 	HorizonDatabaseDsn string `valid:"required" toml:"horizon_database_dsn"`
 	// Account which receive XLM
-	AccountPublicKey   string `valid:"required,stellar_accountid" toml:"account_public_key"`
+	AccountPublicKey string `valid:"required,stellar_accountid" toml:"account_public_key"`
 	// Minimum value of transaction accepted by Bifrost in XLM.
 	// Everything below will be ignored.
-	MinimumValueXlm    string `valid:"required" toml:"minimum_value_xlm"`
+	MinimumValueXlm string `valid:"required" toml:"minimum_value_xlm"`
 	// Prefix which will be used to determine transaction will be processed by bifrost
-	MemoPrefix         string `valid:"optional" toml:"memo_prefix"`
+	MemoPrefix string `valid:"optional" toml:"memo_prefix"`
 	// TokenPrice is a price of one token in XLM
 	TokenPrice string `valid:"required" toml:"token_price"`
 }
