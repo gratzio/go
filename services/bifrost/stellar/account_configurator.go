@@ -15,28 +15,38 @@ func (ac *AccountConfigurator) Start() error {
 	ac.log = common.CreateLogger("StellarAccountConfigurator")
 	ac.log.Info("StellarAccountConfigurator starting")
 
-	_, err := keypair.Parse(ac.IssuerPublicKey)
-	if err != nil || (err == nil && ac.IssuerPublicKey[0] != 'G') {
-		err = errors.Wrap(err, "Invalid IssuerPublicKey")
+	ikp, err := keypair.Parse(ac.IssuerSecretKey)
+	if err != nil || (err == nil && ac.IssuerSecretKey[0] != 'S') {
+		err = errors.Wrap(err, "Invalid IssuerSecretKey")
 		ac.log.Error(err)
 		return err
 	}
 
-	_, err = keypair.Parse(ac.DistributionPublicKey)
-	if err != nil || (err == nil && ac.DistributionPublicKey[0] != 'G') {
-		err = errors.Wrap(err, "Invalid DistributionPublicKey")
+	dkp, err := keypair.Parse(ac.DistributionSecretKey)
+	if err != nil || (err == nil && ac.DistributionSecretKey[0] != 'S') {
+		err = errors.Wrap(err, "Invalid DistributionSecretKey")
 		ac.log.Error(err)
 		return err
 	}
 
-	kp, err := keypair.Parse(ac.SignerSecretKey)
+	ckp, err := keypair.Parse(ac.ChannelSecretKey)
+	if err != nil || (err == nil && ac.ChannelSecretKey[0] != 'S') {
+		err = errors.Wrap(err, "Invalid ChannelSecretKey")
+		ac.log.Error(err)
+		return err
+	}
+
+	skp, err := keypair.Parse(ac.SignerSecretKey)
 	if err != nil || (err == nil && ac.SignerSecretKey[0] != 'S') {
 		err = errors.Wrap(err, "Invalid SignerSecretKey")
 		ac.log.Error(err)
 		return err
 	}
 
-	ac.signerPublicKey = kp.Address()
+	ac.issuerPublicKey = ikp.Address()
+	ac.distributionPublicKey = dkp.Address()
+	ac.channelPublicKey = ckp.Address()
+	ac.signerPublicKey = skp.Address()
 
 	root, err := ac.Horizon.Root()
 	if err != nil {
@@ -49,7 +59,7 @@ func (ac *AccountConfigurator) Start() error {
 		return errors.Errorf("Invalid network passphrase (have=%s, want=%s)", root.NetworkPassphrase, ac.NetworkPassphrase)
 	}
 
-	err = ac.updateSignerSequence()
+	err = ac.updateChannelSequence()
 	if err != nil {
 		err = errors.Wrap(err, "Error loading issuer sequence number")
 		ac.log.Error(err)

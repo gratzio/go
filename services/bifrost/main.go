@@ -16,6 +16,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/stellar/go/clients/horizon"
+	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/services/bifrost/bitcoin"
 	"github.com/stellar/go/services/bifrost/config"
 	"github.com/stellar/go/services/bifrost/database"
@@ -128,6 +129,14 @@ This command will create 3 server.Server's listening on ports 8000-8002.`,
 		time.Sleep(2 * time.Second)
 
 		accounts := make(chan server.GenerateAddressResponse)
+
+		ikp, err := keypair.Parse(cfg.Stellar.IssuerSecretKey)
+		if err != nil || (err == nil && cfg.Stellar.IssuerSecretKey[0] != 'S') {
+			log.WithField("err", err).Error("Invalid IssuerSecretKey")
+			os.Exit(-1)
+		}
+		issuerPublicKey := ikp.Address()
+
 		users := stress.Users{
 			Horizon: &horizon.Client{
 				URL: cfg.Stellar.Horizon,
@@ -138,7 +147,7 @@ This command will create 3 server.Server's listening on ports 8000-8002.`,
 			NetworkPassphrase: cfg.Stellar.NetworkPassphrase,
 			UsersPerSecond:    usersPerSecond,
 			BifrostPorts:      ports,
-			IssuerPublicKey:   cfg.Stellar.IssuerPublicKey,
+			IssuerPublicKey:   issuerPublicKey,
 		}
 		go users.Start(accounts)
 		for {
@@ -385,8 +394,9 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 
 	stellarAccountConfigurator := &stellar.AccountConfigurator{
 		NetworkPassphrase:     cfg.Stellar.NetworkPassphrase,
-		IssuerPublicKey:       cfg.Stellar.IssuerPublicKey,
-		DistributionPublicKey: cfg.Stellar.DistributionPublicKey,
+		IssuerSecretKey:       cfg.Stellar.IssuerSecretKey,
+		DistributionSecretKey: cfg.Stellar.DistributionSecretKey,
+		ChannelSecretKey:      cfg.Stellar.ChannelSecretKey,
 		SignerSecretKey:       cfg.Stellar.SignerSecretKey,
 		NeedsAuthorize:        cfg.Stellar.NeedsAuthorize,
 		TokenAssetCode:        cfg.Stellar.TokenAssetCode,

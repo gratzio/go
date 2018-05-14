@@ -76,7 +76,7 @@ CREATE TABLE broadcasted_event (
   address varchar(42) NOT NULL,
   event event NOT NULL,
   data text NOT NULL,
-  PRIMARY KEY (id),
+  PRIMARY KEY (id)
   /* UNIQUE (address, event) */
 );
 

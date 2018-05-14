@@ -11,9 +11,9 @@ import (
 	stdhttp "net/http"
 	"os"
 	"os/signal"
-	"time"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/stellar/go/keypair"
 	"github.com/stellar/go/services/bifrost/bitcoin"
@@ -84,7 +84,7 @@ func (s *Server) Start() error {
 	if s.LumenListener.Enabled {
 		var err error
 
-		minimumValueXlmFloat, err := strconv.ParseFloat(s.MinimumValueXlm, 64) 
+		minimumValueXlmFloat, err := strconv.ParseFloat(s.MinimumValueXlm, 64)
 		s.minimumValueXlmStroops = int64(minimumValueXlmFloat * 10000000)
 		if err != nil {
 			return errors.Wrap(err, "Invalid minimum accepted Lumen transaction value: "+s.MinimumValueXlm)
@@ -161,7 +161,7 @@ func (s *Server) startHTTPServer() {
 func (s *Server) isLumenEventStream(address string) bool {
 	// check Lumen Memo prefix if exists
 	if s.Config.Lumen.MemoPrefix != "" && !strings.HasPrefix(strings.ToUpper(address), strings.ToUpper(s.Config.Lumen.MemoPrefix)) {
-		return false;
+		return false
 	}
 
 	if s.Config.Lumen.MemoPrefix != "" {
@@ -171,9 +171,9 @@ func (s *Server) isLumenEventStream(address string) bool {
 			// and additionall check it starts from '5'
 			return len(addressWithoutPrefix) < 25 && addressWithoutPrefix[0] == '5'
 		} else {
-			return false;
+			return false
 		}
-	} 
+	}
 
 	// for Lumen make sure address is short as address generated for lumen is uint64 so it can't be long
 	// and additionall check it starts from '5'
@@ -191,7 +191,7 @@ func (s *Server) HandlerEvents(w stdhttp.ResponseWriter, r *stdhttp.Request) {
 			w.WriteHeader(stdhttp.StatusBadRequest)
 			return
 		}
-		
+
 		if s.isLumenEventStream(address) {
 			chain = database.ChainLumen
 		} else if address[0] == '0' {
@@ -240,7 +240,7 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 	}
 
 	var address string
-	
+
 	association, err := s.Database.GetAssociationByStellarPublicKey(chain, stellarPublicKey)
 	if err != nil {
 		log.WithField("err", err).Error("Error getting association")
@@ -287,15 +287,15 @@ func (s *Server) handlerGenerateAddress(w stdhttp.ResponseWriter, r *stdhttp.Req
 			}).Error("Error creating address association")
 			w.WriteHeader(stdhttp.StatusInternalServerError)
 			return
-		}		
+		}
 	} else {
 		address = association.Address
 	}
-	
+
 	// Create SSE stream
 	s.SSEServer.CreateStream(address)
 
-	addressResponse :=  address
+	addressResponse := address
 	if chain == database.ChainLumen {
 		addressResponse = s.Config.Lumen.AccountPublicKey + ";" + address
 	}
