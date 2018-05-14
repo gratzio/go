@@ -155,8 +155,8 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 	}
 
 	ac.setAccountStatus(destination, StatusRemovingSigner)
-
-	if ac.LockUnixTimestamp == 0 {
+		
+	if ac.LockUnixTimestamp == 0 || ac.LockUnixTimestamp < uint64(time.Now().Unix()) {
 		localLog.Info("Removing temporary signer")
 		err = ac.removeTemporarySigner(destination)
 		if err != nil {
