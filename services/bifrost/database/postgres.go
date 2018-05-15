@@ -31,6 +31,7 @@ const (
 	processedTransactionTableName = "processed_transaction"
 	transactionsQueueTableName    = "transactions_queue"
 	recoveryTransactionTableName  = "recovery_transaction"
+	accountConfiguratorErrorsTableName  = "acc_configurator_errors"
 )
 
 type keyValueStoreRow struct {
@@ -70,6 +71,16 @@ type processedTransactionRow struct {
 type recoveryTransactionRow struct {
 	Source      string `db:"source"`
 	EnvelopeXDR string `db:"envelope_xdr"`
+}
+
+type accountConfiguratorErrorRow struct {
+	Destination				string `db:"stellar_public_key"`
+	AssetCode				string `db:"asset_code"`
+	Amount					string `db:"amount"`
+	/* AccCreatedWithBalance	sql.NullString `db:"acc_created_with_balance"` */
+	AccCreatedWithBalance	string `db:"acc_created_with_balance"`
+	ErrorCode 				string `db:"error_code"`
+	ErrorMessage 			string `db:"error_message"`
 }
 
 func fromQueueTransaction(tx queue.Transaction) *transactionsQueueRow {
@@ -385,6 +396,24 @@ func (d *PostgresDatabase) SaveLastProcessedStellarTransaction(id uint64) error 
 	return d.saveLastProcessedBlock(stellarLastTransactionIdKey, id)
 }
 
+func (d *PostgresDatabase) createSqlNullString(s string) sql.NullString {
+    if len(s) == 0 {
+        return sql.NullString{}
+    }
+    return sql.NullString{
+         String: s,
+         Valid: true,
+    }
+}
+
+func (d *PostgresDatabase) TrackAccountConfiguratorError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string) error {
+	accountConfiguratorErrorsTable := d.getTable(accountConfiguratorErrorsTableName, nil)
+	accountConfiguratorError := accountConfiguratorErrorRow{Destination: destination, AssetCode: assetCode, Amount: amount, AccCreatedWithBalance: accCreatedWithBalance, ErrorCode: errorCode, ErrorMessage: errorMessage}
+
+	_, err := accountConfiguratorErrorsTable.Insert(accountConfiguratorError).Exec()
+	return err
+}
+
 // QueueAdd implements queue.Queue interface. If element already exists in a queue, it should
 // return nil.
 func (d *PostgresDatabase) QueueAdd(tx queue.Transaction) error {
@@ -513,5 +542,13 @@ func (d *PostgresDatabase) AddRecoveryTransaction(sourceAccount string, txEnvelo
 	recoveryTransaction := recoveryTransactionRow{Source: sourceAccount, EnvelopeXDR: txEnvelope}
 
 	_, err := recoveryTransactionTable.Insert(recoveryTransaction).Exec()
+	if err != nil {
+		if isDuplicateError(err) {
+			_, err = recoveryTransactionTable.Update(nil, map[string]interface{}{"source": sourceAccount}).Set("envelope_xdr", txEnvelope).Exec()
+			if err != nil {
+				return errors.Wrap(err, "Error updating recovery_transaction table")
+			}	
+		}
+	}
 	return err
 }

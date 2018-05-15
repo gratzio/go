@@ -81,8 +81,24 @@ CREATE TABLE broadcasted_event (
 );
 
 CREATE TABLE recovery_transaction (
+  id bigserial,
   source varchar(56) NOT NULL,
-  envelope_xdr text NOT NULL
+  envelope_xdr text NOT NULL,
+  PRIMARY KEY (id),
+  UNIQUE (source)
 );
+
+CREATE TABLE acc_configurator_errors (
+  id bigserial,
+  stellar_public_key varchar(56) NOT NULL, 
+  asset_code varchar(3) NOT NULL, 
+  amount varchar(20) NOT NULL,
+  acc_created_with_balance varchar(20) NULL,
+  error_code varchar(32) NULL,
+  error_message text NULL,
+  timestamp timestamp default current_timestamp,
+  PRIMARY KEY (id)
+);
+CREATE INDEX stellar_public_key_index ON acc_configurator_errors (stellar_public_key);
 
 CREATE INDEX source_index ON recovery_transaction (source);`, SchemaVersion)

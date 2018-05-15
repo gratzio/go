@@ -402,6 +402,7 @@ func createServer(cfg config.Config, stressTest bool) *server.Server {
 		TokenAssetCode:        cfg.Stellar.TokenAssetCode,
 		StartingBalance:       cfg.Stellar.StartingBalance,
 		LockUnixTimestamp:     cfg.Stellar.LockUnixTimestamp,
+		WaitForSignerTimeout:  cfg.Stellar.WaitForSignerTimeout,
 	}
 
 	if cfg.Stellar.StartingBalance == "" {

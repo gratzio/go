@@ -2,18 +2,10 @@ package lumen
 
 import (
 	"database/sql"
-	//"github.com/derekparker/delve/pkg/config"
 	"github.com/jmoiron/sqlx/types"
 	"github.com/stellar/go/services/bifrost/config"
 	"github.com/stellar/go/support/log"
 )
-
-// var (
-// 	eight = big.NewInt(8)
-// 	ten   = big.NewInt(10)
-// 	// satInBtc = 10^8
-// 	satInBtc = new(big.Rat).SetInt(new(big.Int).Exp(ten, eight, nil))
-// )
 
 // Listener listens for transactions using bitcoin-core RPC. It calls TransactionHandler for each new
 // transactions. It will reprocess the block if TransactionHandler returns error. It will

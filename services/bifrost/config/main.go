@@ -39,6 +39,8 @@ type Config struct {
 		StartingBalance string `valid:"optional,stellar_amount" toml:"starting_balance"`
 		// LockUnixTimestamp defines unix timestamp when user account will be unlocked.
 		LockUnixTimestamp uint64 `valid:"optional" toml:"lock_unix_timestamp"`
+		// WaitForSignerTimeout timeout in seconds to wait user assign temporary signer to account
+		WaitForSignerTimeout int64 `valid:"optional" toml:"wait_for_signer_timeout"`
 	} `valid:"required" toml:"stellar"`
 	Database struct {
 		Type string `valid:"matches(^postgres$)"`
