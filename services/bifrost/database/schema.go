@@ -87,6 +87,7 @@ CREATE TABLE recovery_transaction (
   PRIMARY KEY (id),
   UNIQUE (source)
 );
+CREATE INDEX source_index ON recovery_transaction (source);
 
 CREATE TABLE acc_configurator_errors (
   id bigserial,
@@ -101,4 +102,4 @@ CREATE TABLE acc_configurator_errors (
 );
 CREATE INDEX stellar_public_key_index ON acc_configurator_errors (stellar_public_key);
 
-CREATE INDEX source_index ON recovery_transaction (source);`, SchemaVersion)
+`, SchemaVersion)
