@@ -16,6 +16,7 @@ const (
 	AccountCreatedAddressEvent      AddressEvent = "account_created"
 	ExchangedEvent                  AddressEvent = "exchanged"
 	ExchangedTimelockedEvent        AddressEvent = "exchanged_timelocked"
+	AccountConfigurationErrorEvent  AddressEvent = "account_config_error"
 )
 
 type Server struct {

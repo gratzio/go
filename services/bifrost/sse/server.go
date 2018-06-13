@@ -57,7 +57,7 @@ func (s *Server) StartPublishing() error {
 			for _, event := range events {
 				s.publishEvent(event.Address, event.Event, []byte(event.Data))
 				
-				if event.Event == "exchanged" || event.Event == "exchanged_timelocked" {
+				if event.Event == "exchanged" || event.Event == "exchanged_timelocked" || event.Event == "account_config_error" {
 					s.log.WithField("event", event.Event).Info("Close SSE streaming after last event")
 					s.eventsServer.RemoveStream(event.Address);
 				}

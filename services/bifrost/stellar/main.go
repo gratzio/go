@@ -21,7 +21,6 @@ const (
 // participate in ICO.
 type AccountConfigurator struct {
 	Horizon               horizon.ClientInterface `inject:""`
-	Storage            	  Storage `inject:""`
 	NetworkPassphrase     string
 	IssuerSecretKey       string
 	DistributionSecretKey string
@@ -38,6 +37,7 @@ type AccountConfigurator struct {
 	OnAccountCreated      func(assetCode string, destination string)
 	OnExchanged           func(assetCode string, estination string)
 	OnExchangedTimelocked func(assetCode string, destination, transaction string)
+	OnError               func(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string)
 
 	issuerPublicKey       string
 	distributionPublicKey string
@@ -48,10 +48,4 @@ type AccountConfigurator struct {
 	accountStatus         map[string]Status
 	accountStatusMutex    sync.Mutex
 	log                   *log.Entry
-}
-
-// Storage is an interface that must be implemented by an object using
-// persistent storage.
-type Storage interface {
-	TrackAccountConfiguratorError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string) error
 }

@@ -67,7 +67,7 @@ CREATE TABLE transactions_queue (
   CONSTRAINT valid_stellar_public_key CHECK (char_length(stellar_public_key) = 56)
 );
 
-CREATE TYPE event AS ENUM ('transaction_received', 'account_created', 'exchanged', 'exchanged_timelocked');
+CREATE TYPE event AS ENUM ('transaction_received', 'account_created', 'exchanged', 'exchanged_timelocked', 'account_config_error');
 
 CREATE TABLE broadcasted_event (
   id bigserial,

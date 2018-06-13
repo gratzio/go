@@ -52,6 +52,8 @@ type Database interface {
 
 	// AddRecoveryTransaction inserts recovery account ID and transaction envelope
 	AddRecoveryTransaction(sourceAccount string, txEnvelope string) error
+
+	TrackAccountConfiguratorError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string) error
 }
 
 type PostgresDatabase struct {

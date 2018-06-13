@@ -79,13 +79,6 @@ func (ac *AccountConfigurator) logStats() {
 	}
 }
 
-func (ac *AccountConfigurator) TrackError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string) {
-	err := ac.Storage.TrackAccountConfiguratorError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage)	
-	if err != nil {
-		ac.log.WithField("err", err).Error("Error tracking account configurator error")
-	}
-}
-
 // ConfigureAccount configures a new account that participated in ICO.
 // * First it creates a new account.
 // * Once a signer is replaced on the account, it creates trust lines and exchanges assets.
@@ -150,7 +143,9 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 
 		if ac.WaitForSignerTimeout > 0 && time.Now().Sub(opStartTime) > time.Duration(ac.WaitForSignerTimeout) * time.Second {
 			localLog.WithField("account", destination).Error("Timeout while waiting for signer changes")
-			ac.TrackError(destination, assetCode, amount, accCreatedWithBalance, "wait_signer_tmout", "Timeout while waiting for signer changes")
+			if ac.OnError != nil {
+				ac.OnError(destination, assetCode, amount, accCreatedWithBalance, "wait_signer_tmout", "Timeout while waiting for signer changes")
+			}
 			return;
 		}
 	
@@ -167,7 +162,9 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 	err := ac.configureAccountTransaction(destination, assetCode, amount, ac.NeedsAuthorize)
 	if err != nil {
 		localLog.WithField("err", err).Error("Error configuring an account")
-		ac.TrackError(destination, assetCode, amount, accCreatedWithBalance, "acc_cfg", err.Error())
+		if ac.OnError != nil {
+			ac.OnError(destination, assetCode, amount, accCreatedWithBalance, "acc_cfg", err.Error())
+		}
 		return
 	}
 
@@ -178,7 +175,9 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 		err = ac.removeTemporarySigner(destination)
 		if err != nil {
 			localLog.WithField("err", err).Error("Error removing temporary signer")
-			ac.TrackError(destination, assetCode, amount, accCreatedWithBalance, "rmv_tmp_signer", err.Error());
+			if ac.OnError != nil {
+				ac.OnError(destination, assetCode, amount, accCreatedWithBalance, "rmv_tmp_signer", err.Error())
+			}
 			return
 		}
 
@@ -190,7 +189,9 @@ func (ac *AccountConfigurator) ConfigureAccount(destination, assetCode, amount s
 		transaction, err := ac.buildUnlockAccountTransaction(destination)
 		if err != nil {
 			localLog.WithField("err", err).Error("Error creating unlock transaction")
-			ac.TrackError(destination, assetCode, amount, accCreatedWithBalance, "crt_unlk_tran", err.Error());
+			if ac.OnError != nil {
+				ac.OnError(destination, assetCode, amount, accCreatedWithBalance, "crt_unlk_tran", err.Error())
+			}
 			return
 		}
 

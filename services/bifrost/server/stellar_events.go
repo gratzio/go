@@ -66,3 +66,23 @@ func (s *Server) OnExchangedTimelocked(assetCode string, destination, transactio
 
 	s.SSEServer.BroadcastEvent(association.Address, sse.ExchangedTimelockedEvent, j)
 }
+
+func (s *Server) OnStellarAccountConfigurationError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage string) {
+	err := s.Database.TrackAccountConfiguratorError(destination, assetCode, amount, accCreatedWithBalance, errorCode, errorMessage)	
+	if err != nil {
+		s.log.WithField("err", err).Error("Error tracking account configurator error")
+	}
+
+	association, err := s.Database.GetAssociationByStellarPublicKeyAndAssetCode(assetCode, destination)
+	if err != nil {
+		s.log.WithField("err", err).Error("Error getting association")
+		return
+	}
+
+	if association == nil {
+		s.log.WithField("stellarPublicKey", destination).Error("Association not found")
+		return
+	}
+
+	s.SSEServer.BroadcastEvent(association.Address, sse.AccountConfigurationErrorEvent, []byte(errorCode))
+}
